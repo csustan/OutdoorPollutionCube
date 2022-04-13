@@ -2,6 +2,7 @@
 <head>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 	<title>A cube of pollution</title>
+    <!--move the favicon icon to the image folder-->
     <link rel="shortcut icon" href="./img/favicon.ico">
 	<!-- include three.js library -->
 	<script src='js/three.js'></script>
@@ -138,19 +139,13 @@
 
 </div>
 
-<!--Canvas
-<canvas id="viewport" width="640" height="480" style="border:1px solid #000000;" ></canvas>
-
-<div id="example">
-	
-</div>
--->
-
-
 <!-- 
   Based on work by Lee Stemkoski: https://github.com/stemkoski as seen at https://stemkoski.github.io/AR-Examples/
   Which in turn is based on the AR.js library and examples created by Jerome Etienne: https://github.com/jeromeetienne/AR.js/
   AR JS can be found at https://github.com/AR-js-org/AR.js 
+  This also uses the jsartoolkit5 to track the camera, which can be found at : https://github.com/artoolkitx/jsartoolkit5
+  And THREEx game controlls for ThreeJS which can be found at: https://github.com/jeromeetienne/threex and read about here: https://www.threejsgames.com/extensions/
+  All of this is based on ThreeJS, which can be found at https://threejs.org/
   Turtles all the way down.
 -->
 
@@ -700,13 +695,13 @@ var outputUpdateZ = function(passedValue){
     monitorLerpPositionAmount.addEventListener('input', function(){
         userInputs.setLerpPositionAmount(monitorLerpPositionAmount.value);
         LerpPositionAmountSlider.value = monitorLerpPositionAmount.value;
-        console.log("setting userInputs to: " + monitorLerpPositionAmount.value)
+        //console.log("setting userInputs to: " + monitorLerpPositionAmount.value) //Test code
     }, false);
 
     monitorLerpQuaternionAmount.addEventListener('input', function(){
         userInputs.setLerpQuaternionAmount(monitorLerpQuaternionAmount.value);
         LerpQuaternionAmountSlider.value = monitorLerpQuaternionAmount.value;
-        console.log("setting userInputs to: " + monitorLerpQuaternionAmount.value)
+        //console.log("setting userInputs to: " + monitorLerpQuaternionAmount.value) //Test code
     }, false);
 
     monitorLerpScaleAmount.addEventListener('input', function(){
@@ -719,97 +714,92 @@ var outputUpdateZ = function(passedValue){
     monitorSmoothToleranceAmount.addEventListener('input', function(){
         userInputs.setSmoothTolerance(monitorSmoothToleranceAmount.value);
         SmoothToleranceSlider.value = monitorSmoothToleranceAmount.value;
-        console.log("setting userInputs to: " + monitorSmoothToleranceAmount.value)
+        //console.log("setting userInputs to: " + monitorSmoothToleranceAmount.value) //Test code
     }, false);
 
     monitorSmoothCountAmount.addEventListener('input', function(){
         userInputs.setSmoothCount(monitorSmoothCountAmount.value);
         SmoothCountSlider.value = monitorSmoothCountAmount.value;
-        console.log("setting userInputs to: " + monitorSmoothCountAmount.value)
+        //console.log("setting userInputs to: " + monitorSmoothCountAmount.value) //Test code
     }, false);
 
     monitorSmoothThresholdAmount.addEventListener('input', function(){
         userInputs.setSmoothThreshold(monitorSmoothThresholdAmount.value);
         SmoothThresholdSlider.value = monitorSmoothThresholdAmount.value;
-        console.log("setting userInputs to: " + monitorSmoothThresholdAmount.value)
+        //console.log("setting userInputs to: " + monitorSmoothThresholdAmount.value) //Test code
     }, false);
 
     //listeners for the input boxes
     monitorRotationspeedX.addEventListener('input', function(){
         userInputs.setRotationspeedX(monitorRotationspeedX.value);
         rotationSpeedSliderX.value = monitorRotationspeedX.value;
-        console.log("setting userInputs to: " + monitorRotationspeedX.value)
+        //console.log("setting userInputs to: " + monitorRotationspeedX.value) //Test code
     }, false);
 
     monitorRotationspeedY.addEventListener('input', function(){
         userInputs.setRotationspeedY(monitorRotationspeedY.value);
         rotationSpeedSliderY.value = monitorRotationspeedY.value;
-        console.log("setting userInputs to: " + monitorRotationspeedY.value)
+        //console.log("setting userInputs to: " + monitorRotationspeedY.value) //Test code
     }, false);
     
     monitorRotationspeedZ.addEventListener('input', function(){
         userInputs.setRotationspeedZ(monitorRotationspeedZ.value);
         rotationSpeedSliderZ.value = monitorRotationspeedZ.value;
-        console.log("setting userInputs to: " + monitorRotationspeedZ.value)
+        //console.log("setting userInputs to: " + monitorRotationspeedZ.value) //Test code
     }, false);
 
     monitorRotationX.addEventListener('input', function(){
         userInputs.setRotationX(monitorRotationX.value);
         RotationSliderX.value = monitorRotationX.value;
-        console.log("setting userInputs to: " + monitorRotationX.value)
+        //console.log("setting userInputs to: " + monitorRotationX.value) //Test code
     }, false);
 
     monitorRotationY.addEventListener('input', function(){
         userInputs.setRotationY(monitorRotationY.value);
         RotationSliderY.value = monitorRotationY.value;
-        console.log("setting userInputs to: " + monitorRotationY.value)
+        //console.log("setting userInputs to: " + monitorRotationY.value) //Test code
     }, false);
     
     monitorRotationZ.addEventListener('input', function(){
         userInputs.setRotationspeedZ(monitorRotationZ.value);
         RotationSliderZ.value = monitorRotationZ.value;
-        console.log("setting userInputs to: " + monitorRotationZ.value)
+        //console.log("setting userInputs to: " + monitorRotationZ.value) //Test code
     }, false);
 
     monitorcubeSizeX.addEventListener('input', function(){
         userInputs.setCubeSizeX( monitorcubeSizeX.value);
         cubeSizeSliderX.value = monitorcubeSizeX.value;
-        //this.cube.scale.x = userInputs.cubeSizeX;
-        console.log("setting userInputs to: " + monitorcubeSizeX.value)
+        //console.log("setting userInputs to: " + monitorcubeSizeX.value) //Test code
     }, false);
 
     monitorcubeSizeY.addEventListener('input', function(){
         userInputs.setCubeSizeY( monitorcubeSizeY.value);
         cubeSizeSliderY.value = monitorcubeSizeY.value;
-        //userInputs.cubeSizeY = monitorcubeSizeY.value;
-        //this.cube.scale.y = userInputs.cubeSizeY;
-        console.log("setting userInputs to: " + monitorcubeSizeY.value)
+        //console.log("setting userInputs to: " + monitorcubeSizeY.value) //Test code
     }, false);
 
     monitorcubeSizeZ.addEventListener('input', function(){
         userInputs.setCubeSizeZ( monitorcubeSizeZ.value);
         cubeSizeSliderZ.value = monitorcubeSizeZ.value;
-        //userInputs.cubeSizeZ = monitorcubeSizeZ.value;
-        //this.cube.scale.z = userInputs.cubeSizeZ;
-        console.log("setting userInputs to: " + monitorcubeSizeZ.value)
+        //console.log("setting userInputs to: " + monitorcubeSizeZ.value) //Test code
     }, false);
 
     monitorcubePositionX.addEventListener('input', function(){
         userInputs.setCubePositionX( monitorcubePositionX.value);
         cubePositionSliderX.value = monitorcubePositionX.value;
-        console.log("setting userInputs to: " + monitorcubePositionX.value)
+        //console.log("setting userInputs to: " + monitorcubePositionX.value) //Test code
     }, false);
 
     monitorcubePositionY.addEventListener('input', function(){
         userInputs.setCubePositionY( monitorcubePositionY.value);
         cubePositionSliderY.value = monitorcubePositionY.value;
-        console.log("setting userInputs to: " + monitorcubePositionY.value)
+        //console.log("setting userInputs to: " + monitorcubePositionY.value) //Test code
     }, false);
 
     monitorcubePositionZ.addEventListener('input', function(){
         userInputs.setCubePositionZ( monitorcubePositionZ.value);
         cubePositionSliderZ.value = monitorcubePositionZ.value;
-        console.log("setting userInputs to: " + monitorcubePositionZ.value)
+        //console//.log("setting userInputs to: " + monitorcubePositionZ.value) //Test code
     }, false);
 
 	//End DOM Controls
