@@ -174,10 +174,10 @@ var userInputs = {
         RotationX: 0,
         RotationY: 0,
         RotationZ: 0,
-
-        cubeSizeX: 13.5, //1.25,
-        cubeSizeY: 13.5, //1.25,
-        cubeSizeZ: 13.5, //1.25,
+        //disabling resize code here and in the 
+        cubeSizeX: 16.875, //1.25, //when you input the numbers from the configuration application, multiply them by 1.25 to scale the value from 80% to 100% (the markers print at 80% their actual size due to the white frame). So 1 becomes 1.25, and 13.5 becomes 16.875
+        cubeSizeY: 16.875, //1.25, //when you input the numbers from the configuration application, multiply them by 1.25 to scale the value from 80% to 100% (the markers print at 80% their actual size due to the white frame). So 1 becomes 1.25, and 13.5 becomes 16.875
+        cubeSizeZ: 16.875, //1.25, //when you input the numbers from the configuration application, multiply them by 1.25 to scale the value from 80% to 100% (the markers print at 80% their actual size due to the white frame). So 1 becomes 1.25, and 13.5 becomes 16.875
 
         cubePositionX: 0,
         cubePositionY: 0,
@@ -285,7 +285,8 @@ var userInputs = {
             //The printed marker takes up 80% of the total printed size
             //This means if you print a 10 inch marker, it only displays as 8 inches
             //To correct this, increase the size by 25%
-            this.cubeSizeX = input * 1.25;
+            //////Disabling for release/////
+            this.cubeSizeX = input;// * 1.25; //multiply by 25% to account for the 20% reduction of the oritinal tracker image print. (25% of 80% is 20% of 100%)
         }, 
         
         getCubeSizeY: function () {
@@ -295,7 +296,8 @@ var userInputs = {
             //The printed marker takes up 80% of the total printed size
             //This means if you print a 10 inch marker, it only displays as 8 inches
             //To correct this, increase the size by 25%
-            this.cubeSizeY = input * 1.25;
+            //////Disabling for release/////
+            this.cubeSizeY = input;// * 1.25; //multiply by 25% to account for the 20% reduction of the oritinal tracker image print. (25% of 80% is 20% of 100%)
         }, 
         
         getCubeSizeZ: function () {
@@ -305,7 +307,8 @@ var userInputs = {
             //The printed marker takes up 80% of the total printed size
             //This means if you print a 10 inch marker, it only displays as 8 inches
             //To correct this, increase the size by 25%
-            this.cubeSizeZ = input * 1.25;
+            //////Disabling for release/////
+            this.cubeSizeZ = input;// * 1.25; //multiply by 25% to account for the 20% reduction of the oritinal tracker image print. (25% of 80% is 20% of 100%)
         },
 
         getCubePositionX: function () {
