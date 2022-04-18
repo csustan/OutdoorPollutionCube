@@ -179,13 +179,13 @@ var userInputs = {
         cubePositionZ: 0,
         //active smoothing:
         lerpPositionAmount: 0.8,
-		lerpQuaternionAmount: 0.8,
+		lerpQuaternionAmount: 0.05, //0, //0.8, //jiggle control
 		lerpScaleAmount: 1,
 
         //Passive Smoothing:
         smoothCountAmount: 5,
         smoothToleranceAmount: 0.01,
-        smoothThresholdAmount: 2,
+        smoothThresholdAmount: 0, //2, //Wobble control
 
         getLerpPositionAmount: function () {
             return Number(this.lerpPositionAmount);
