@@ -1,810 +1,332 @@
 <!DOCTYPE html>
-<head>
-	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<title>A cube of pollution</title>
-    <!--move the favicon icon to the image folder-->
-    <link rel="shortcut icon" href="./img/favicon.ico">
-	<!-- include three.js library -->
-	<script src='js/three.js'></script>
-	<!-- include jsartookit -->
-	<script src="jsartoolkit5/artoolkit.min.js"></script>
-	<script src="jsartoolkit5/artoolkit.api.js"></script>
-	<!-- include threex.artoolkit -->
-	<script src="threex/threex-artoolkitsource.js"></script>
-	<script src="threex/threex-artoolkitcontext.js"></script>
-	<script src="threex/threex-arbasecontrols.js"></script>
-	<script src="threex/threex-armarkercontrols.js"></script>
-    <!-- include additional library to add lerp smoothing-->
-    <script src="threex/threex-arsmoothedcontrols.js"></script>
-</head>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<title>A cube of pollution</title>
+<!--redirect favicon-->
+<link rel="shortcut icon" href="./img/favicon.ico">
+<!-- three.js library -->
+<script src='js/three.js'></script>
+<!--Additional Libraries-->
+<!-- States frame rate monitor -->
+<!-- <script src="js/stats.min.js"></script> --> 
+<!-- ar.js -->
+<script src="js/ar-threex.js"></script>
+<!--Set Base URL for the THEEx Library to refernece normally '../' -->
+<script>THREEx.ArToolkitContext.baseURL = './js/'</script>
 
-<body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
-
-<!--Controls-->
-
-<div style="position:absolute;top:0;left:0" >
-	<div style="font-size: 20pt;  text-align: center;"><label><a href="https://www.csustan.edu/sustainability/news-events">Click For Info on Carbon Footprints</a></label></div>
-	<div style="display: none">
-		<label>X Rotation Speed</label>
-		<input id="RotationspeedX" name="RotationspeedX" type="number" step=".01" value="0" max="1">
-		<input type="range" id="rotationSpeedUpdateX" class="input" value="0" min="0" max="1" step=".01" oninput="rotationSpeedUpdateX(value)">
+<body style='margin : 0px; overflow: hidden;'>
+	
+	<div style='position: absolute; top: 10px; width:100%; text-align: center; z-index: 1;'>
+		<div style="font-size: 20pt;  text-align: center;"><label><a href="https://www.csustan.edu/sustainability/news-events">Click For Info on Carbon Footprints</a></label></div>
 	</div>
 
-	<div style="display: none">
-		<label>Y Rotation Speed</label>
-		<input id="RotationspeedY" name="RotationspeedY" type="number" step=".01" value="0" max="1">
-		<input type="range" id="rotationSpeedUpdateY" class="input" value="0" min="0" max="1" step=".01" oninput="rotationSpeedUpdateY(value)">
-	</div>
+	<script>
+		//////////////////////////////////////////////////////////////////////////////////
+		//		Init
+		//////////////////////////////////////////////////////////////////////////////////
 
-	
-	<div style="display: none">
-		<label>Z Rotation Speed</label>
-		<input id="RotationspeedZ" name="RotationspeedZ" type="number" step=".01" value="0" max="1">
-		<input type="range" id="rotationSpeedUpdateZ" class="input" value="0" min="0" max="1" step=".01" oninput="rotationSpeedUpdateZ(value)">
-	</div> 
-</br>
-<div style="display: none">
-    <label>X Rotation</label>
-    <input id="RotationX" name="RotationX" type="number" step=".01" value="0">
-    <input type="range" id="RotationSliderX" class="input" value="0" min="-360" max="360" step=".01" oninput="rotationUpdateX(value)">
-</div>
+		// init renderer
+		var renderer = new THREE.WebGLRenderer({
+			antialias: true,
+			alpha: true
+		});
+		renderer.setClearColor(new THREE.Color('lightgrey'), 0)
+		//renderer.setSize(640, 480);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.domElement.style.position = 'absolute'
+		renderer.domElement.style.top = '0px'
+		renderer.domElement.style.left = '0px'
+		//renderer.domElement.style.zIndex = '1';
+		document.body.appendChild(renderer.domElement);
 
-<div style="display: none">
-    <label>Y Rotation</label>
-    <input id="RotationY" name="RotationY" type="number" step=".01" value="0">
-    <input type="range" id="RotationSliderY" class="input" value="0" min="-360" max="360" step=".01" oninput="rotationUpdateY(value)">
-</div>
+		// array of functions for the rendering loop
+		var onRenderFcts = [];
+		var arToolkitContext, arMarkerControls, markerRoot;
 
-<div style="display: none">
-    <label>Z Rotation</label>
-    <input id="RotationZ" name="RotationZ" type="number" step=".01" value="0">
-    <input type="range" id="RotationSliderZ" class="input" value="0" min="-360" max="360" step=".01" oninput="rotationUpdateZ(value)">
-</div>
+		// init scene and camera
+		var scene = new THREE.Scene();
 
-</br>
+		//////////////////////////////////////////////////////////////////////////////////
+		//		Initialize a basic camera
+		//////////////////////////////////////////////////////////////////////////////////
 
-<div style="display: none">
-		<label>Cube X Size</label>
-		<input type="number" id="cubeSizeX" name="cubeSizeX" value="16.875" min="0.01">
-		<input type="range" id="cubeSizeSliderX" class="input" value="16.875" min="0.01" max="100" step=".1" oninput="outputUpdateX(value)">
-</div>
+		// Create a camera
+		var camera = new THREE.Camera();
+		scene.add(camera);
 
-<div style="display: none">
-		<label>Cube Y Size</label>
-		<input type="number" id="cubeSizeY" value="16.875" min="0.01">
-		<input type="range" id="cubeSizeSliderY" class="input" value="16.875" min="0.01" max="100" step=".1" oninput="outputUpdateY(value)">
-</div>
+		markerRoot = new THREE.Group
+		scene.add(markerRoot)
+		////////////////////////////////////////////////////////////////////////////////
+		//          handle arToolkitSource
+		////////////////////////////////////////////////////////////////////////////////
 
-<div style="display: none">
-		<label>Cube Z Size</label>
-		<input type="number" id="cubeSizeZ" value="16.875" min="0.01">
-		<input type="range" id="cubeSizeSliderZ" class="input" value="16.875" min="0.01" max="100" step=".1" oninput="outputUpdateZ(value)">
-</div>
+		var arToolkitSource = new THREEx.ArToolkitSource({
+			// to read from the webcam
+			sourceType: 'webcam',
 
-</br>
-	
-<div style="display: none">
-	<label>Cube X Position</label>
-	<input type="number" id="cubePositionX" name="cubePositionX" value="0">
-	<input type="range" id="cubePositionSliderX" class="input" value="0" min="-100" max="100" step=".1" oninput="outputUpdatePositionX(value)">
-</div>
+			sourceWidth: window.innerWidth > window.innerHeight ? 640 : 480,
+			sourceHeight: window.innerWidth > window.innerHeight ? 480 : 640,
 
-<div style="display: none">
-	<label>Cube Y Position</label>
-	<input type="number" id="cubePositionY" value="0">
-	<input type="range" id="cubePositionSliderY" class="input" value="0" min="-100" max="100" step=".1" oninput="outputUpdatePositionY(value)">
-</div>
+			// // to read from an image
+			// sourceType : 'image',
+			// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/images/img.jpg',
 
-<div style="display: none">
-	<label>Cube Z Position</label>
-	<input type="number" id="cubePositionZ" value="0">
-	<input type="range" id="cubePositionSliderZ" class="input" value="0" min="-100" max="100" step=".1" oninput="outputUpdatePositionZ(value)">
-</div>
-</br>
+			// to read from a video
+			// sourceType : 'video',
+			// sourceUrl : THREEx.ArToolkitContext.baseURL + '../data/videos/headtracking.mp4',
+		})
 
-<label style="display: none">Smoothing controls:</label>
-<div style="display: none">
-	<label>Lerp Position</label>
-	<input type="number" id="lerpPositionAmount" value="0.8">
-	<input type="range" id="lerpPositionAmountSlider" class="input" value="0.8" min="0" max="100" step=".01" oninput="outputUpdateLerpPositionAmount(value)">
-</div>
-<div style="display: none">
-	<label>Lerp Quaternion</label>
-	<input type="number" id="lerpQuaternionAmount" value="0.8">
-	<input type="range" id="lerpQuaternionAmountSlider" class="input" value="0.8" min="0" max="100" step=".01" oninput="outputUpdateLerpQuaternionAmount(value)">
-</div>
+		arToolkitSource.init(function onReady() {
+			//initARContext()
+			//onResize()
 
-<div style="display: none">
-	<label>Lerp Scale</label>
-	<input type="number" id="lerpScaleAmount" value="1">
-	<input type="range" id="lerpScaleAmountSlider" class="input" value="1" min="0" max="100" step=".01" oninput="outputUpdateLerpScaleAmount(value)">
-</div>
+			arToolkitSource.domElement.addEventListener('canplay', () => {
+				console.log(
+					'canplay',
+					'actual source dimensions',
+					arToolkitSource.domElement.videoWidth,
+					arToolkitSource.domElement.videoHeight
+				);
 
-<div style="display: none">
-	<label>Smooth Threshold</label>
-	<input type="number" id="smoothThresholdAmount" value="2">
-	<input type="range" id="smoothThresholdAmountSlider" class="input" value="2" min="0" max="100" step=".01" oninput="outputUpdateSmoothThresholdAmount(value)">
-</div>
-<div style="display: none">
-	<label>Smooth Tolerance</label>
-	<input type="number" id="smoothToleranceAmount" value="0.01">
-	<input type="range" id="smoothToleranceAmountSlider" class="input" value="0.01" min="0" max="100" step=".01" oninput="outputUpdateSmoothToleranceAmount(value)">
-</div>
+				initARContext();
+			});
+			window.arToolkitSource = arToolkitSource;
+			setTimeout(() => {
+				onResize()
+			}, 2000);
 
-<div style="display: none">
-	<label>Smooth Count</label>
-	<input type="number" id="smoothCountAmount" value="5">
-	<input type="range" id="smoothCountAmountSlider" class="input" value="5" min="0" max="100" step=".01" oninput="outputUpdateSmoothCountAmount(value)">
-</div>
+		})
 
-</div>
-
-<!-- 
-  Based on work by Lee Stemkoski: https://github.com/stemkoski as seen at https://stemkoski.github.io/AR-Examples/
-  Which in turn is based on the AR.js library and examples created by Jerome Etienne: https://github.com/jeromeetienne/AR.js/
-  AR JS can be found at https://github.com/AR-js-org/AR.js 
-  This also uses the jsartoolkit5 to track the camera, which can be found at : https://github.com/artoolkitx/jsartoolkit5
-  And THREEx game controlls for ThreeJS which can be found at: https://github.com/jeromeetienne/threex and read about here: https://www.threejsgames.com/extensions/
-  All of this is based on ThreeJS, which can be found at https://threejs.org/
-  Turtles all the way down.
--->
-
-<script>
-
-var scene, camera, renderer, clock, deltaTime, totalTime;
-
-var arToolkitSource, arToolkitContext;
-
-var markerRoot1, markerRoot2;
-//var smoothedRoot, makerRoot2;
-
-var cube;
-
-//User Controls
-var userInputs = { 
-        RotationspeedX: 0,
-        RotationspeedY: 0,
-        RotationspeedZ: .001,
-
-        RotationX: 0,
-        RotationY: 0,
-        RotationZ: 0,
-        //disabling resize code here and in the 
-        cubeSizeX: 16.875, //1.25, //when you input the numbers from the configuration application, multiply them by 1.25 to scale the value from 80% to 100% (the markers print at 80% their actual size due to the white frame). So 1 becomes 1.25, and 13.5 becomes 16.875
-        cubeSizeY: 16.875, //1.25, //when you input the numbers from the configuration application, multiply them by 1.25 to scale the value from 80% to 100% (the markers print at 80% their actual size due to the white frame). So 1 becomes 1.25, and 13.5 becomes 16.875
-        cubeSizeZ: 16.875, //1.25, //when you input the numbers from the configuration application, multiply them by 1.25 to scale the value from 80% to 100% (the markers print at 80% their actual size due to the white frame). So 1 becomes 1.25, and 13.5 becomes 16.875
-
-        cubePositionX: 0,
-        cubePositionY: -8,
-        cubePositionZ: -6.5,
-        //active smoothing:
-        lerpPositionAmount: 0.8,
-		lerpQuaternionAmount: 0.05, //0, //0.8, //jiggle control
-		lerpScaleAmount: 1,
-
-        //Passive Smoothing:
-        smoothCountAmount: 5,
-        smoothToleranceAmount: 0.01,
-        smoothThresholdAmount: 0, //2, //Wobble control
-
-        getLerpPositionAmount: function () {
-            return Number(this.lerpPositionAmount);
-        },
-        setLerpPositionAmount: function (input) {
-            this.lerpPositionAmount = Number(input);
-        }, 
-
-        getLerpQuaternionAmount: function () {
-            return Number(this.lerpQuaternionAmount);
-        },
-        setLerpQuaternionAmount: function (input) {
-            this.lerpQuaternionAmount = Number(input);
-        }, 
-
-        getLerpScaleAmount: function () {
-            return Number(this.lerpScaleAmount);
-        },
-        setLerpScaleAmount: function (input) {
-            this.lerpScaleAmount = Number(input);
-        }, 
-
-//passive smoothing
-        getSmoothCountAmount: function () {
-            return Number(this.lerpSmoothCountAmount);
-        },
-        setSmoothCountAmount: function (input) {
-            this.smoothCountAmount = Number(input);
-        }, 
-
-        getSmoothToleranceAmount: function () {
-            return Number(this.smoothToleranceAmount);
-        },
-        setSmoothToleranceAmount: function (input) {
-            this.smoothToleranceAmount = Number(input);
-        },
-
-        getSmoothThresholdAmount: function () {
-            return Number(this.smoothThresholdAmount);
-        },
-        setSmoothThresholdAmount: function (input) {
-            this.smoothThresholdAmount = Number(input);
-        }, 
-
-        getRotationspeedX: function () {
-            return Number(this.RotationspeedX);
-        },
-        setRotationspeedX: function (input) {
-            this.RotationspeedX = Number(input);
-        }, 
-      
-        getRotationspeedY: function () {
-            return Number(this.RotationspeedY);
-        },
-        setRotationspeedY: function (input) {
-            this.RotationspeedY = Number(input);
-        }, 
-
-        getRotationspeedZ: function () {
-            return Number(this.RotationspeedZ);
-        },
-        setRotationspeedZ: function (input) {
-            this.RotationspeedZ = Number(input);
-        }, 
-
-        getRotationX: function () {
-            return Number(this.RotationX);
-        },
-        setRotationX: function (input) {
-            this.RotationX = Number(input);
-        }, 
-      
-        getRotationY: function () {
-            return Number(this.RotationY);
-        },
-        setRotationY: function (input) {
-            this.RotationY = Number(input);
-        }, 
-
-        getRotationZ: function () {
-            return Number(this.RotationZ);
-        },
-        setRotationZ: function (input) {
-            this.RotationZ = Number(input);
-        }, 
+//		arToolkitSource.init(function onReady() {
+//			arToolkitSource.domElement.addEventListener('canplay', () => {
+//				console.log(
+//					'canplay',
+//					'actual source dimensions',
+//					arToolkitSource.domElement.videoWidth,
+//					arToolkitSource.domElement.videoHeight
+//				);
+//
+//				initARContext();
+//			});
+//			window.arToolkitSource = arToolkitSource;
+//			setTimeout(() => {
+//				onResize()
+//			}, 2000);
+//		})
 
 
-        getCubeSizeX: function () {
-            return this.cubeSizeX;
-        },
-        setCubeSizeX: function (input) {
-            //The printed marker takes up 80% of the total printed size
-            //This means if you print a 10 inch marker, it only displays as 8 inches
-            //To correct this, increase the size by 25%
-            //////Disabling for release/////
-            this.cubeSizeX = input;// * 1.25; //multiply by 25% to account for the 20% reduction of the oritinal tracker image print. (25% of 80% is 20% of 100%)
-        }, 
-        
-        getCubeSizeY: function () {
-            return this.cubeSizeY;
-        },
-        setCubeSizeY: function (input) {
-            //The printed marker takes up 80% of the total printed size
-            //This means if you print a 10 inch marker, it only displays as 8 inches
-            //To correct this, increase the size by 25%
-            //////Disabling for release/////
-            this.cubeSizeY = input;// * 1.25; //multiply by 25% to account for the 20% reduction of the oritinal tracker image print. (25% of 80% is 20% of 100%)
-        }, 
-        
-        getCubeSizeZ: function () {
-            return this.cubeSizeZ;
-        },
-        setCubeSizeZ: function (input) {
-            //The printed marker takes up 80% of the total printed size
-            //This means if you print a 10 inch marker, it only displays as 8 inches
-            //To correct this, increase the size by 25%
-            //////Disabling for release/////
-            this.cubeSizeZ = input;// * 1.25; //multiply by 25% to account for the 20% reduction of the oritinal tracker image print. (25% of 80% is 20% of 100%)
-        },
 
-        getCubePositionX: function () {
-            return this.cubePositionX;
-        },
-        setCubePositionX: function (input) {
-            this.cubePositionX = input;
-        }, 
-        
-        getCubePositionY: function () {
-            return this.cubePositionY;
-        },
-        setCubePositionY: function (input) {
-            this.cubePositionY = input;
-        }, 
-        
-        getCubePositionZ: function () {
-            return this.cubePositionZ;
-        },
-        setCubePositionZ: function (input) {
-            this.cubePositionZ = input;
-        }
+		// handle resize
+		window.addEventListener('resize', function () {
+			onResize()
+		})
 
-    };
-
-	//DOM Links
-	
-        //Select DOM Elements
-        var monitorRotationspeedX = document.querySelector ('#RotationspeedX');
-        var monitorRotationspeedY = document.querySelector ('#RotationspeedY');
-        var monitorRotationspeedZ = document.querySelector ('#RotationspeedZ');
-
-        var monitorRotationX = document.querySelector ('#RotationX');
-        var monitorRotationY = document.querySelector ('#RotationY');
-        var monitorRotationZ = document.querySelector ('#RotationZ');
-
-        var RotationSliderX = document.querySelector ('#RotationSliderX');
-        var RotationSliderY = document.querySelector ('#RotationSliderY');
-        var RotationSliderZ = document.querySelector ('#RotationSliderZ');
+		function onResize() {
+			arToolkitSource.onResizeElement()
+			arToolkitSource.copyElementSizeTo(renderer.domElement)
+			if (window.arToolkitContext) { //The arToolKitContext is generated in a differnt function, so check that the arToolkitContext is actually on the Window before searching it.
+				if (window.arToolkitContext.arController !== null) {
+					arToolkitSource.copyElementSizeTo(window.arToolkitContext.arController.canvas)
+				}
+			}
+		}
+		////////////////////////////////////////////////////////////////////////////////
+		//          initialize arToolkitContext
+		////////////////////////////////////////////////////////////////////////////////
 
 
-        var monitorcubeSizeX = document.querySelector ('#cubeSizeX');
-        var monitorcubeSizeY = document.querySelector ('#cubeSizeY');
-        var monitorcubeSizeZ = document.querySelector ('#cubeSizeZ');
+		function initARContext() { // create atToolkitContext
+			arToolkitContext = new THREEx.ArToolkitContext({
+				cameraParametersUrl: THREEx.ArToolkitContext.baseURL + 'data/camera_para.dat',
+				detectionMode: 'mono'
+			})
+			// initialize it
+			arToolkitContext.init(function onCompleted() {
+				// copy projection matrix to camera
+				camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
 
-        var cubeSizeSliderX = document.querySelector ('#cubeSizeSliderX');
-        var cubeSizeSliderY = document.querySelector ('#cubeSizeSliderY');
-        var cubeSizeSliderZ = document.querySelector ('#cubeSizeSliderZ');
+				arToolkitContext.arController.orientation = getSourceOrientation();
+				arToolkitContext.arController.options.orientation = getSourceOrientation();
 
-        var monitorcubePositionX = document.querySelector ('#cubePositionX');
-        var monitorcubePositionY = document.querySelector ('#cubePositionY');
-        var monitorcubePositionZ = document.querySelector ('#cubePositionZ');
-
-        var cubePositionSliderX = document.querySelector ('#cubePositionSliderX');
-        var cubePositionSliderY = document.querySelector ('#cubePositionSliderY');
-        var cubePositionSliderZ = document.querySelector ('#cubePositionSliderZ');
-
-        var rotationSpeedSliderX = document.querySelector ('#rotationSpeedUpdateX');
-        var rotationSpeedSliderY = document.querySelector ('#rotationSpeedUpdateY');
-        var rotationSpeedSliderZ = document.querySelector ('#rotationSpeedUpdateZ');
-
-        //Lerp Smoothing
-        var monitorLerpPositionAmount = document.querySelector ('#lerpPositionAmount');
-        var monitorLerpPositionAmountSlider = document.querySelector ('#lerpPositionAmountSlider');
-        
-        var monitorLerpQuaternionAmount = document.querySelector ('#lerpQuaternionAmount');
-        var monitorLerpQuaternionAmountSlider = document.querySelector ('#lerpQuaternionAmountSlider');
-      
-        var monitorLerpScaleAmount = document.querySelector ('#lerpScaleAmount');
-        var monitorLerpScaleAmountSlider = document.querySelector ('#lerpScaleAmountSlider');
-      
-        //Passive Smoothing
-        var monitorSmoothCountAmount = document.querySelector ('#smoothCountAmount');
-        var monitorSmoothCountAmountSlider = document.querySelector ('#smoothCountAmountSlider');
-      
-        var monitorSmoothToleranceAmount = document.querySelector ('#smoothToleranceAmount');
-        var monitorSmoothToleranceAmountSlider = document.querySelector ('#smoothToleranceAmountSlider');
-      
-        var monitorSmoothThresholdAmount = document.querySelector ('#smoothThresholdAmount');
-        var monitorSmoothThresholdAmountSlider = document.querySelector ('#smoothThresholdAmountSlider');
-      
-
-        initialize();
-animate();
-
-function initialize()
-{
-	scene = new THREE.Scene();
-
-	let ambientLight = new THREE.AmbientLight( 0xcccccc, 0.5 );
-	scene.add( ambientLight );
+				console.log('arToolkitContext', arToolkitContext);
+				window.arToolkitContext = arToolkitContext;
+			})
+			
+			artoolkitMarker = new THREEx.ArMarkerControls(arToolkitContext, markerRoot, {
+				type: 'pattern',
+				patternUrl: THREEx.ArToolkitContext.baseURL + 'data/lambda.patt',
 				
-	camera = new THREE.Camera();
-	scene.add(camera);
+				smooth: true,
+	   			 // number of matrices to smooth tracking over, more = smoother but slower follow
+	   			smoothCount: 5,
+	    		// distance tolerance for smoothing, if smoothThreshold # of matrices are under tolerance, tracking will stay still
+	    		smoothTolerance: 0.01,
+	    		// threshold for smoothing, will keep still unless enough matrices are over tolerance
+	    		smoothThreshold: 2 //Wobble control	
+				
+			})
+											  
+		}
 
-	renderer = new THREE.WebGLRenderer({
-		antialias : true,
-		//canvas: viewport,
-		alpha: true
-	});
-	renderer.setClearColor(new THREE.Color('lightgrey'), 0)
-	renderer.setSize( 640, 480 );
-	//renderer.domElement.style.position = 'absolute';
-	renderer.domElement.style.top = '0px';
-	renderer.domElement.style.left = '0px';
-	//renderer.domElement.style.zIndex = '1';
-	document.body.appendChild( renderer.domElement );
-	//document.getElementById("example").appendChild( renderer.domElement );
-	
-	clock = new THREE.Clock();
-	deltaTime = 0;
-	totalTime = 0;
-	
-	////////////////////////////////////////////////////////////
-	// setup arToolkitSource
-	////////////////////////////////////////////////////////////
+		//	arToolkitContext.init(() => { // copy projection matrix to camera
+		//		camera.projectionMatrix.copy(arToolkitContext.getProjectionMatrix());
 
-	arToolkitSource = new THREEx.ArToolkitSource({
-		sourceType : 'webcam',
-	});
+		//		arToolkitContext.arController.orientation = getSourceOrientation();
+		//		arToolkitContext.arController.options.orientation = getSourceOrientation();
 
-	function onResize()
-	{
-		arToolkitSource.onResize()	
-		arToolkitSource.copySizeTo(renderer.domElement)	
-		if ( arToolkitContext.arController !== null )
-		{
-			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
-		}	
-	}
+		//		console.log('arToolkitContext', arToolkitContext);
+		//		window.arToolkitContext = arToolkitContext;
+		//	})
 
-	arToolkitSource.init(function onReady(){
-		onResize()
-	});
-	
-	// handle resize event
-	window.addEventListener('resize', function(){
-		onResize()
-	});
-	
-	////////////////////////////////////////////////////////////
-	// setup arToolkitContext
-	////////////////////////////////////////////////////////////	
+		//	// MARKER
+		//	arMarkerControls = new THREEx.ArMarkerControls(arToolkitContext, camera, {
+		//		type: 'pattern',
+		//		 patternUrl : THREEx.ArToolkitContext.baseURL + 'data/lambda.patt',
+		//		// as we controls the camera, set changeMatrixMode: 'cameraTransformMatrix'
+		//		changeMatrixMode: 'cameraTransformMatrix'
+		//	})
 
-	// create atToolkitContext
-	arToolkitContext = new THREEx.ArToolkitContext({
-		cameraParametersUrl: 'data/camera_para.dat',
-		detectionMode: 'mono'
-	});
-	
-	// copy projection matrix to camera when initialization complete
-	arToolkitContext.init( function onCompleted(){
-		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
-	});
+		//	scene.visible = false
 
-	////////////////////////////////////////////////////////////
-	// setup markerRoots
-	////////////////////////////////////////////////////////////
-    
-    // build markerControls
-    markerRoot1 = new THREE.Group();
-    scene.add(markerRoot1);
-	
-    //Build a soothed marker root
-    let smoothedRoot = new THREE.Group();
-    
-    //markerRoot1 = new THREE.Group();
-	//scene.add(markerRoot1);
-    
-    scene.add(smoothedRoot);
-	//let markerControls1 = new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
-    let markerControls1 = new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
-        type: 'pattern', 
-        patternUrl: "data/kanji.patt",
-        smooth: true,
-	    // number of matrices to smooth tracking over, more = smoother but slower follow
-	    smoothCount: userInputs.getSmoothCountAmount(), //5,
-	    // distance tolerance for smoothing, if smoothThreshold # of matrices are under tolerance, tracking will stay still
-	    smoothTolerance: userInputs.getSmoothToleranceAmount(),//0.01,
-	    // threshold for smoothing, will keep still unless enough matrices are over tolerance
-	    smoothThreshold: userInputs.getSmoothThresholdAmount()//2,
-	})
+		//	console.log('ArMarkerControls', arMarkerControls);
+		//	window.arMarkerControls = arMarkerControls;
+		//}
 
-	let geometry1 = new THREE.CubeGeometry(1,1,1);
-	
-	let material1 = new THREE.MeshNormalMaterial({
-		transparent: true,
-		opacity: 0.5,
-		side: THREE.DoubleSide
-	}); 
-    let textureOpacity = 0.75;
-    
-    var cubeMaterial = [   new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('img/CarbonTexture_01.png'),  transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //RIGHT SIDE 
-                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //LEFT SIDE
-                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //TOP SIDE
-                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //BOTTOM SIDE
-                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //FRONT SIDE
-                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }) //BACK SIDE
+
+
+		function getSourceOrientation() {
+			if (!arToolkitSource) {
+				return null;
+			}
+
+			console.log(
+				'actual source dimensions',
+				arToolkitSource.domElement.videoWidth,
+				arToolkitSource.domElement.videoHeight
+			);
+
+			if (arToolkitSource.domElement.videoWidth > arToolkitSource.domElement.videoHeight) {
+				console.log('source orientation', 'landscape');
+				return 'landscape';
+			} else {
+				console.log('source orientation', 'portrait');
+				return 'portrait';
+			}
+		}
+
+		// update artoolkit on every frame
+		onRenderFcts.push(function () {
+			if (!arToolkitContext || !arToolkitSource || !arToolkitSource.ready) {
+				return;
+			}
+
+			arToolkitContext.update(arToolkitSource.domElement)
+
+			//  // update scene.visible if the marker is seen
+			//scene.visible = camera.visible
+		})
+
+		////////////////////////////////////////////////////////////////////////////////
+		//          Create a ArMarkerControls
+		////////////////////////////////////////////////////////////////////////////////
+
+		var markerRoot = new THREE.Group
+		scene.add(markerRoot)
+
+
+		// build a smoothedControls
+		var smoothedRoot = new THREE.Group()
+		scene.add(smoothedRoot)
+		var smoothedControls = new THREEx.ArSmoothedControls(smoothedRoot, {
+			
+			lerpPosition: 0.8,
+			lerpQuaternion: 0.05,  //jiggle control
+			lerpScale: 1,
+			
+			//Defaults:
+			//lerpPosition: 0.4,
+			//lerpQuaternion: 0.3,
+			//lerpScale: 1,
+
+		})
+		onRenderFcts.push(function (delta) {
+			smoothedControls.update(markerRoot)
+		})
+		//////////////////////////////////////////////////////////////////////////////////
+		//		add an object in the scene
+		//////////////////////////////////////////////////////////////////////////////////
+
+
+		//const loader = new THREE.CubeTextureLoader();
+		//loader.setPath( 'img/numbers/' );
+		//const textureCube = loader.load( [
+		//								'1_350px-350px.png', '2_350px-350px.png',
+		//								'3_350px-350px.png', '4_350px-350px.png',
+		//								'5_350px-350px.png', '6_350px-350px.png'
+		//								] 
+		//);
+        //const imageMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube, transparent: true, opacity: .5, side: THREE.DoubleSide } );
+
+		// //const imageMaterial = new THREE.MeshBasicMaterial( { color: 0xffffff, envMap: textureCube } );
+		
+		var arWorldRoot = smoothedRoot;
+		const textureOpacity = 0.75;
+		var cubeMaterial = [
+							new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('./img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //RIGHT SIDE 
+                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('./img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //LEFT SIDE
+                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('./img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //TOP SIDE
+                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('./img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //BOTTOM SIDE
+                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('./img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }), //FRONT SIDE
+                            new THREE.MeshBasicMaterial({ map: new THREE.TextureLoader().load('./img/CarbonTexture_01.png'), transparent: true, opacity: textureOpacity, side: THREE.DoubleSide }) //BACK SIDE
                         ];
 
-    var material2 = new THREE.MeshFaceMaterial( cubeMaterial );
-	
-	//cube = new THREE.Mesh( geometry1, material1 );
-    cube = new THREE.Mesh( geometry1, material2 ); //Imported Texture
+    	var imageMaterial2 = new THREE.MeshFaceMaterial( cubeMaterial );
 
-	//cube.position.y = 1;
-	//cube.rotation.x = -0.45;
+		var geometry = new THREE.BoxGeometry(16.875, 16.875, 16.875);
+		var material = new THREE.MeshNormalMaterial({
+			transparent: true,
+			opacity: 0.5,
+			side: THREE.DoubleSide
+		});
+		//var mesh = new THREE.Mesh(geometry, material);
+		//mesh.position.y = geometry.parameters.height / 2
+		var cubeMesh = new THREE.Mesh(geometry, imageMaterial2);
+		//var cubeMesh = new THREE.Mesh(geometry, imageMaterial);
+		//cubeMesh.position.y = geometry.parameters.height / 2
+		
+		cubeMesh.position.set( 0, -8, -6.5); // The cube is about 16 units, and needs to have the A-frame about in the bottom middle 
+											 //the A-frame with the printed marker is about three feet off the ground.
+		//scene.add(cubeMesh);
+		arWorldRoot.add(cubeMesh);
+		onRenderFcts.push(function () {
+			cubeMesh.rotation.z += 0.001
+		})
 
-    //stablizing cube
-    smoothedControls = new THREEx.ArSmoothedControls(smoothedRoot, {
-		lerpPosition: userInputs.getLerpPositionAmount(),
-		lerpQuaternion: userInputs.getLerpQuaternionAmount(),
-		lerpScale: userInputs.getLerpScaleAmount(),
-		// minVisibleDelay: 1,
-		// minUnvisibleDelay: 1,
-	});
+		//////////////////////////////////////////////////////////////////////////////////
+		//		render the whole thing on the page
+		//////////////////////////////////////////////////////////////////////////////////
+		//if issues with frame rate occur, add a stats box to monitor it:
+		//var stats = new Stats(); //test code 
+		//document.body.appendChild(stats.dom); //Test Code
+		// render the scene
+		onRenderFcts.push(function () {
+			renderer.render(scene, camera);
+			//stats.update(); //Test Code
+		})
 
-    //markerRoot1.add( cube );
-    smoothedRoot.add( cube );
-    
-}
-
-
-function update()
-{
-	// update artoolkit on every frame
-	if ( arToolkitSource.ready !== false ){
-		arToolkitContext.update( arToolkitSource.domElement );
-    }
-
-    // additional code for smoothed controls
-	smoothedControls.update(markerRoot1);
-
-}
-
-
-function render()
-{
-	renderer.render( scene, camera );
-}
-
-//Cube edits must be done in here if you want them live
-function animate()
-{
-	requestAnimationFrame(animate);
-	deltaTime = clock.getDelta();
-	totalTime += deltaTime;
-	//cube.rotation.y += 0.05;
-
-	if(userInputs.getRotationspeedX() > 0){
-        cube.rotation.x += userInputs.getRotationspeedX();
-    } else (cube.rotation.x = userInputs.getRotationX());
-    
-    if(userInputs.getRotationspeedY() > 0){
-        cube.rotation.y += userInputs.getRotationspeedY();
-    } else (cube.rotation.y = userInputs.getRotationY());
-
-    if(userInputs.getRotationspeedZ() > 0){
-        cube.rotation.z += userInputs.getRotationspeedZ();
-    } else (cube.rotation.z = userInputs.getRotationZ());
-
-    if(userInputs.getCubeSizeX() > 0 ){
-        cube.scale.x = userInputs.getCubeSizeX();
-    }
-
-    if(userInputs.getCubeSizeY() > 0 ){
-        cube.scale.y = userInputs.getCubeSizeY();
-    }
-
-    if(userInputs.getCubeSizeZ() > 0 ){
-        cube.scale.z = userInputs.getCubeSizeZ();
-    }
-
-    if(userInputs.getCubePositionX() > -100 && userInputs.getCubePositionX() < 100 ){
-        cube.position.x = userInputs.getCubePositionX();
-    }
-
-    if(userInputs.getCubePositionY() > -100  && userInputs.getCubePositionY() < 100 ){
-        cube.position.y = userInputs.getCubePositionY();
-    }
-
-    if(userInputs.getCubePositionZ() > -100  && userInputs.getCubePositionZ() < 100 ){
-        cube.position.z = userInputs.getCubePositionZ();
-    }
-
-	update();
-	render();
-}//End Animation
-
-//Bind sliders to their input counterparts
-
-var outputUpdateX = function(passedValue){
-        userInputs.setCubeSizeX(passedValue);
-        monitorcubeSizeX.value = passedValue;
-    };
-
-var outputUpdateY = function(passedValue){
-        userInputs.setCubeSizeY(passedValue);
-        monitorcubeSizeY.value = passedValue;
-    };
-
-var outputUpdateZ = function(passedValue){
-        userInputs.setCubeSizeZ(passedValue);
-        monitorcubeSizeZ.value = passedValue;
-    };
-
-    var rotationSpeedUpdateX = function(passedValue){
-        userInputs.setRotationspeedX(passedValue);
-        monitorRotationspeedX.value = passedValue;
-    };
-
-    var rotationSpeedUpdateY = function(passedValue){
-        userInputs.setRotationspeedY(passedValue);
-        monitorRotationspeedY.value = passedValue;
-    };
-
-    var rotationSpeedUpdateZ = function(passedValue){
-        userInputs.setRotationspeedZ(passedValue);
-        monitorRotationspeedZ.value = passedValue;
-    };
-
-    var rotationUpdateX = function(passedValue){
-        userInputs.setRotationX(passedValue);
-        monitorRotationX.value = passedValue;
-    };
-
-    var rotationUpdateY = function(passedValue){
-        userInputs.setRotationY(passedValue);
-        monitorRotationY.value = passedValue;
-    };
-
-    var rotationUpdateZ = function(passedValue){
-        userInputs.setRotationZ(passedValue);
-        monitorRotationZ.value = passedValue;
-    };
-
-	var outputUpdatePositionX = function(passedValue){
-        userInputs.setCubePositionX(passedValue);
-        monitorcubePositionX.value = passedValue;
-    };
-
-	var outputUpdatePositionY = function(passedValue){
-        userInputs.setCubePositionY(passedValue);
-        monitorcubePositionY.value = passedValue;
-    };
-
-	var outputUpdatePositionZ = function(passedValue){
-        userInputs.setCubePositionZ(passedValue);
-        monitorcubePositionZ.value = passedValue;
-    };
-
-    //Lerp contols
-
-    var outputUpdateLerpPositionAmount = function(passedValue){
-        userInputs.setLerpPositionAmount(passedValue);
-        monitorLerpPositionAmount.value = passedValue;
-    };
-
-    var outputUpdateLerpQuaternionAmount = function(passedValue){
-        userInputs.setLerpQuaternionAmount(passedValue);
-        monitorLerpQuaternionAmount.value = passedValue;
-    };
-
-    var outputUpdateLerpScaleAmount = function(passedValue){
-        userInputs.setLerpScaleAmount(passedValue);
-        monitorLerpScaleAmount.value = passedValue;
-    };
-
-    //Passive Smoothing
-    var outputUpdateSmoothCountAmount = function(passedValue){
-        userInputs.setSmoothCountAmount(passedValue);
-        monitorSmoothCountAmount.value = passedValue;
-    };
- 
-    var outputUpdateSmoothThresholdAmount = function(passedValue){
-        userInputs.setSmoothThresholdAmount(passedValue);
-        monitorSmoothThresholdAmount.value = passedValue;
-    };
-
-    var outputUpdateSmoothToleranceAmount = function(passedValue){
-        userInputs.setSmoothToleranceAmount(passedValue);
-        monitorSmoothToleranceAmount.value = passedValue;
-    };
-
-
-//Dom interface
-
-    //Lerp Listeners for the input boxes
-    monitorLerpPositionAmount.addEventListener('input', function(){
-        userInputs.setLerpPositionAmount(monitorLerpPositionAmount.value);
-        LerpPositionAmountSlider.value = monitorLerpPositionAmount.value;
-        //console.log("setting userInputs to: " + monitorLerpPositionAmount.value) //Test code
-    }, false);
-
-    monitorLerpQuaternionAmount.addEventListener('input', function(){
-        userInputs.setLerpQuaternionAmount(monitorLerpQuaternionAmount.value);
-        LerpQuaternionAmountSlider.value = monitorLerpQuaternionAmount.value;
-        //console.log("setting userInputs to: " + monitorLerpQuaternionAmount.value) //Test code
-    }, false);
-
-    monitorLerpScaleAmount.addEventListener('input', function(){
-        userInputs.setLerpScaleAmount(monitorLerpScaleAmount.value);
-        LerpScaleAmountSlider.value = monitorLerpScaleAmount.value;
-        console.log("setting userInputs to: " + monitorLerpScaleAmount.value)
-    }, false);
-
-    //Listeners for passive smoothing
-    monitorSmoothToleranceAmount.addEventListener('input', function(){
-        userInputs.setSmoothTolerance(monitorSmoothToleranceAmount.value);
-        SmoothToleranceSlider.value = monitorSmoothToleranceAmount.value;
-        //console.log("setting userInputs to: " + monitorSmoothToleranceAmount.value) //Test code
-    }, false);
-
-    monitorSmoothCountAmount.addEventListener('input', function(){
-        userInputs.setSmoothCount(monitorSmoothCountAmount.value);
-        SmoothCountSlider.value = monitorSmoothCountAmount.value;
-        //console.log("setting userInputs to: " + monitorSmoothCountAmount.value) //Test code
-    }, false);
-
-    monitorSmoothThresholdAmount.addEventListener('input', function(){
-        userInputs.setSmoothThreshold(monitorSmoothThresholdAmount.value);
-        SmoothThresholdSlider.value = monitorSmoothThresholdAmount.value;
-        //console.log("setting userInputs to: " + monitorSmoothThresholdAmount.value) //Test code
-    }, false);
-
-    //listeners for the input boxes
-    monitorRotationspeedX.addEventListener('input', function(){
-        userInputs.setRotationspeedX(monitorRotationspeedX.value);
-        rotationSpeedSliderX.value = monitorRotationspeedX.value;
-        //console.log("setting userInputs to: " + monitorRotationspeedX.value) //Test code
-    }, false);
-
-    monitorRotationspeedY.addEventListener('input', function(){
-        userInputs.setRotationspeedY(monitorRotationspeedY.value);
-        rotationSpeedSliderY.value = monitorRotationspeedY.value;
-        //console.log("setting userInputs to: " + monitorRotationspeedY.value) //Test code
-    }, false);
-    
-    monitorRotationspeedZ.addEventListener('input', function(){
-        userInputs.setRotationspeedZ(monitorRotationspeedZ.value);
-        rotationSpeedSliderZ.value = monitorRotationspeedZ.value;
-        //console.log("setting userInputs to: " + monitorRotationspeedZ.value) //Test code
-    }, false);
-
-    monitorRotationX.addEventListener('input', function(){
-        userInputs.setRotationX(monitorRotationX.value);
-        RotationSliderX.value = monitorRotationX.value;
-        //console.log("setting userInputs to: " + monitorRotationX.value) //Test code
-    }, false);
-
-    monitorRotationY.addEventListener('input', function(){
-        userInputs.setRotationY(monitorRotationY.value);
-        RotationSliderY.value = monitorRotationY.value;
-        //console.log("setting userInputs to: " + monitorRotationY.value) //Test code
-    }, false);
-    
-    monitorRotationZ.addEventListener('input', function(){
-        userInputs.setRotationspeedZ(monitorRotationZ.value);
-        RotationSliderZ.value = monitorRotationZ.value;
-        //console.log("setting userInputs to: " + monitorRotationZ.value) //Test code
-    }, false);
-
-    monitorcubeSizeX.addEventListener('input', function(){
-        userInputs.setCubeSizeX( monitorcubeSizeX.value);
-        cubeSizeSliderX.value = monitorcubeSizeX.value;
-        //console.log("setting userInputs to: " + monitorcubeSizeX.value) //Test code
-    }, false);
-
-    monitorcubeSizeY.addEventListener('input', function(){
-        userInputs.setCubeSizeY( monitorcubeSizeY.value);
-        cubeSizeSliderY.value = monitorcubeSizeY.value;
-        //console.log("setting userInputs to: " + monitorcubeSizeY.value) //Test code
-    }, false);
-
-    monitorcubeSizeZ.addEventListener('input', function(){
-        userInputs.setCubeSizeZ( monitorcubeSizeZ.value);
-        cubeSizeSliderZ.value = monitorcubeSizeZ.value;
-        //console.log("setting userInputs to: " + monitorcubeSizeZ.value) //Test code
-    }, false);
-
-    monitorcubePositionX.addEventListener('input', function(){
-        userInputs.setCubePositionX( monitorcubePositionX.value);
-        cubePositionSliderX.value = monitorcubePositionX.value;
-        //console.log("setting userInputs to: " + monitorcubePositionX.value) //Test code
-    }, false);
-
-    monitorcubePositionY.addEventListener('input', function(){
-        userInputs.setCubePositionY( monitorcubePositionY.value);
-        cubePositionSliderY.value = monitorcubePositionY.value;
-        //console.log("setting userInputs to: " + monitorcubePositionY.value) //Test code
-    }, false);
-
-    monitorcubePositionZ.addEventListener('input', function(){
-        userInputs.setCubePositionZ( monitorcubePositionZ.value);
-        cubePositionSliderZ.value = monitorcubePositionZ.value;
-        //console//.log("setting userInputs to: " + monitorcubePositionZ.value) //Test code
-    }, false);
-
-	//End DOM Controls
-
-</script>
-
+		console.dir(onRenderFcts);		//test code
+		// run the rendering loop
+		var lastTimeMsec = null
+		requestAnimationFrame(function animate(nowMsec) {
+			// keep looping
+			requestAnimationFrame(animate);
+			// measure time
+			lastTimeMsec = lastTimeMsec || nowMsec - 1000 / 60
+			var deltaMsec = Math.min(200, nowMsec - lastTimeMsec)
+			lastTimeMsec = nowMsec
+			// call each update function
+			onRenderFcts.forEach(function (onRenderFct) {
+				onRenderFct(deltaMsec / 1000, nowMsec / 1000)
+			})
+		})
+	</script>
 </body>
-</html>
